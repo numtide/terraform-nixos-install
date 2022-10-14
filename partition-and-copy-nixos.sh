@@ -2,7 +2,7 @@
 
 set -uex -o pipefail
 
-if [ "$#" -ne 5 ]; then
+if [ "$#" -ne 4 ]; then
   echo "USAGE: $0 NIXOS_PARTITIONER_ATTR NIXOS_SYSTEM_ATTR TARGET_HOST TARGET_PORT SSH_KEY" >&2
   exit 1
 fi
@@ -11,12 +11,18 @@ NIXOS_PARTITIONER_ATTR=$1
 NIXOS_SYSTEM_ATTR=$2
 TARGET_HOST="$3"
 TARGET_PORT="$4"
-SSH_KEY="$5"
-shift 5
+shift 4
 
-# FIXME: Do we need to support legacy nix here?
-nixos_partitioner=$(nix build --print-out-paths --builders '' "$NIXOS_PARTITIONER_ATTR")
-nixos_system=$(nix build --print-out-paths --builders '' "${NIXOS_SYSTEM_ATTR}.config.system.build.toplevel")
+root=$(git rev-parse --show-toplevel)
+if [ -e "$root"/flake.nix ]; then
+  nixos_partitioner=$(nix build --print-out-paths --builders '' "$NIXOS_PARTITIONER_ATTR")
+  nixos_system=$(nix build --print-out-paths --builders '' "${NIXOS_SYSTEM_ATTR}.config.system.build.toplevel")
+elif [ -e "$root"/nix/default.nix ]; then
+  nixos_partitioner=$(nix-build --builders '' "$root/nix" -A "$NIXOS_PARTITIONER_ATTR")
+  nixos_system=$(nix-build --builders '' "$root/nix" -A "$NIXOS_SYSTEM_ATTR.config.system.build.toplevel")
+else
+  echo neither flake.nix or nix/default.nix found. bailing out
+fi
 
 workDir=$(mktemp -d)
 trap 'rm -rf "$workDir"' EXIT

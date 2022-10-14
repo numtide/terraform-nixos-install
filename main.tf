@@ -2,9 +2,10 @@ resource "null_resource" "kexec_nixos" {
   count = var.kexec_tarball_url == null ? 0 : 1
   connection {
     type = "ssh"
-    user = "root"
+    user = var.target_user
     host = var.target_host
     port = var.target_port
+    private_key = var.ssh_private_key
   }
 
   # In theory we could use `cloud-config` here but we want to keep it consistent between bare metal and vms
@@ -16,7 +17,7 @@ resource "null_resource" "kexec_nixos" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/kexec-nixos.sh",
-      "/tmp/kexec-nixos.sh '${var.kexec_tarball_url}'"
+      "sudo /tmp/kexec-nixos.sh '${var.kexec_tarball_url}'"
     ]
   }
 
@@ -42,13 +43,16 @@ resource "null_resource" "install_nixos" {
 
   connection {
     type = "ssh"
-    user = "root"
     host = var.target_host
     port = var.target_port
+    private_key = var.ssh_private_key
   }
 
   provisioner "local-exec" {
-    command = "${path.module}/partition-and-copy-nixos.sh ${var.nixos_partitioner_attr} ${var.nixos_system_attr} ${var.target_user}@${var.target_host} ${var.target_port} ${var.ssh_private_key == "" ? "-" : var.ssh_private_key}"
+    command = "${path.module}/partition-and-copy-nixos.sh ${var.nixos_partitioner_attr} ${var.nixos_system_attr} root@${var.target_host} ${var.target_port}"
+    environment = {
+      SSH_KEY = var.ssh_private_key == "" ? "-" : var.ssh_private_key
+    }
   }
 
   provisioner "remote-exec" {

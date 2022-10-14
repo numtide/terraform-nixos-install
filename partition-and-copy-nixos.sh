@@ -28,11 +28,14 @@ workDir=$(mktemp -d)
 trap 'rm -rf "$workDir"' EXIT
 
 sshOpts=(-p "${TARGET_PORT}")
+sshOpts+=(-o UserKnownHostsFile=/dev/null)
+sshOpts+=(-o StrictHostKeyChecking=no)
 
 if [[ -n ${SSH_KEY+x} && ${SSH_KEY} != "-" ]]; then
   sshPrivateKeyFile="$workDir/ssh_key"
   echo "$SSH_KEY" >"$sshPrivateKeyFile"
   chmod 0700 "$sshPrivateKeyFile"
+  unset SSH_AUTH_SOCK # don't use system agent if key was supplied
   sshOpts+=(-o "IdentityFile=${sshPrivateKeyFile}")
 fi
 

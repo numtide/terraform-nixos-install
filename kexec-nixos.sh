@@ -10,7 +10,7 @@ fi
 URL=$1
 
 if command -v curl >/dev/null 2>&1; then
-  fetch() { curl --fail -L "$1"; }
+  fetch() { curl --fail -Ss -L "$1"; }
 elif command -v wget >/dev/null 2>&1; then
   fetch() { wget "$1" -O-; }
 else
@@ -21,7 +21,6 @@ fi
 rm -rf /root/kexec-installer
 mkdir -p /root/kexec-installer
 # Don't use `/tmp` here in case its tmpfs to prevent out-of-memory situations.
-fetch "$URL" | tar -C /root/kexec-installer -xvJf-
+fetch "$URL" | tar -C /root/kexec-installer -xvzf-
 export TMPDIR=/root/kexec-installer
-# We start `kexec -e` in the background. `setsid` is required here to not stop this process.
-setsid /root/kexec-installer/kexec-boot
+setsid /root/kexec-installer/kexec/run

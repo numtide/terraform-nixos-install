@@ -17,7 +17,7 @@ resource "null_resource" "kexec_nixos" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/kexec-nixos.sh",
-      "sudo /tmp/kexec-nixos.sh '${var.kexec_tarball_url}'"
+      "if [[ $(id -u) -ne 0 ]]; then sudo /tmp/kexec-nixos.sh '${var.kexec_tarball_url}'; else /tmp/kexec-nixos.sh '${var.kexec_tarball_url}'; fi"
     ]
   }
 

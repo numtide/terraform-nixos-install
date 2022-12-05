@@ -33,6 +33,12 @@ variable "target_port" {
   default     = 22
 }
 
+variable "target_shell" {
+  type        = string
+  description = "The shell name to run remote scripts"
+  default     = "bash"
+}
+
 variable "ssh_private_key" {
   type        = string
   description = "Content of private key used to connect to the target_host"
